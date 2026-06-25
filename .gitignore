@@ -45,6 +45,6 @@ temp/
 *.tsbuildinfo
 
 # Package manager lock files (optional)
-# package-lock.json
+ package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
