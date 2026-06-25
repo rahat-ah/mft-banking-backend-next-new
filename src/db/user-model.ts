@@ -7,13 +7,17 @@ export interface IUser {
   email: string;
   mobileNumber: string;
   password: string;
-  role: "manager" | "loan_officer" | "ceo";
+  role: "manager" | "loan_officer" | "ceo" | "admin";
   profileImageUrl?: string;
   branch?: string;
   joinDate: string;
   createdAt?: Date;
   updatedAt?: Date;
   department?: string;
+}
+export interface IAdmin extends IUser {
+  adminSecretCode?: string;
+  officeSecretCode?: string;
 }
 
 export const userSchema = new mongoose.Schema<IUser>({
@@ -40,7 +44,7 @@ export const userSchema = new mongoose.Schema<IUser>({
   },
   role: {
     type: String,
-    enum: ["manager", "loan_officer", "ceo"],
+    enum: ["manager", "loan_officer", "ceo","admin"],
     required: true,
   },
   profileImageUrl: {
@@ -69,7 +73,8 @@ export const userSchema = new mongoose.Schema<IUser>({
   },
 },
 {
-  timestamps: true
+  timestamps: true,
+  discriminatorKey: "role",
 });
 
 userSchema.pre("save", async function () {
@@ -78,4 +83,23 @@ userSchema.pre("save", async function () {
   }
 });
 
+const adminSchema = new mongoose.Schema<IAdmin>({
+  adminSecretCode: {
+    type: String,
+    default: process.env.ADMIN_SECRET_CODE,
+  },
+  officeSecretCode: {
+    type: String,
+    default: process.env.OFFICE_SECRET_CODE,
+  },
+  
+
+})
+
 export const UserModel =mongoose.models?.User || mongoose.model<IUser>("User", userSchema);
+export const AdminModel = UserModel.discriminator(
+  "admin",
+  adminSchema
+);
+
+
