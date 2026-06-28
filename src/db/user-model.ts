@@ -15,6 +15,16 @@ export interface IUser {
   updatedAt?: Date;
   department?: string;
   isVerified?: boolean;
+  currentOtp?: {
+    verifyOtp?: {
+      otp: string;
+      otpExpireAt: number;
+    }[];
+    resetOtp?: {
+      otp: string;
+      resetOtpExpireAt: number;
+    }[];
+  };
 }
 export interface IAdmin extends IUser {
   adminSecretCode?: string;
@@ -75,6 +85,20 @@ export const userSchema = new mongoose.Schema<IUser>({
   isVerified: {
     type: Boolean,
     default: false,
+  },
+  currentOtp: {
+    verifyOtp: [
+      {
+        otp: { type: String, default: "" },
+        otpExpireAt:{type: Number, default: 0}
+      },
+    ],
+    resetOtp: [
+      {
+        otp: { type: String, default: "" },
+        resetOtpExpireAt:{type: Number, default: 0}
+      },
+    ],
   },
 },
 {

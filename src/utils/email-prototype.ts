@@ -16,3 +16,57 @@ export const sendSignupMailHtml = (name : string) => {
     </div>
   `;
 };
+
+export const sendOtpMailHtml = ( otp : string , status : string , expireTimeInMinutes : number) => {
+  return `<div style="font-family: Arial, sans-serif; background:#f5f5f5; padding:20px;">
+    <table width="100%" cellspacing="0" cellpadding="0">
+      <tr>
+        <td align="center">
+          <table width="450" style="background:#ffffff; border-radius:8px; padding:25px; text-align:center;">
+
+            <tr>
+              <td style="font-size:22px; font-weight:bold; color:#333;">
+                This is your ${status}
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:15px 0; font-size:15px; color:#555;">
+                Hi Dear,<br><br>
+                Use the OTP below to verify your account.
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:20px 0;">
+                <div style="display:inline-block;
+                            font-size:26px;
+                            font-weight:bold;
+                            letter-spacing:4px;
+                            background:#2563eb;
+                            color:#fff;
+                            padding:12px 20px;
+                            border-radius:6px;">
+                  ${otp}
+                </div>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding-top:10px; font-size:13px; color:#777;">
+                This ${status} will expire in ${expireTimeInMinutes} minutes from now.
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding-top:20px; font-size:12px; color:#999;">
+                If you didn’t request this, please ignore this email.
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </div>`;
+};

@@ -1,11 +1,9 @@
-import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import {Resend} from "resend";
 import { Request, Response } from "express";
 
 import { AdminModel, UserModel } from "../db/user-model";
-import { sendSignupMailHtml } from "../utils/email-prototype";
+import { sendOtpMailHtml, sendSignupMailHtml } from "../utils/email-prototype";
 import { transporter } from "../utils/nodemailer-config";
 
 export const signUp = async (req: Request, res: Response) => {
@@ -83,7 +81,7 @@ export const signUp = async (req: Request, res: Response) => {
 
       const isCodeMatched = await bcrypt.compare(
         secretCode,
-        admin.officeSecretCode
+        admin.officeSecretCode,
       );
       if (!isCodeMatched) {
         return res.json({
@@ -102,7 +100,6 @@ export const signUp = async (req: Request, res: Response) => {
       });
     }
 
-
     const token = jwt.sign({ email }, process.env.JWT_SECRET!, {
       expiresIn: "1h",
     });
@@ -113,20 +110,138 @@ export const signUp = async (req: Request, res: Response) => {
       maxAge: 60 * 60 * 1000,
     });
 
-
     await transporter.sendMail({
-    from: `"Author of MFT" <${process.env.BREVO_EMAIL_SERVICE_SMTP_SENDER}>`,
-    to: "rahatahmedbosscomputer@gmail.com",
-    subject: 'Welcome to MFT!',
-    html: sendSignupMailHtml(fullName)
+      from: `"Author of MFT" <${process.env.BREVO_EMAIL_SERVICE_SMTP_SENDER}>`,
+      to: "rahatahmedbosscomputer@gmail.com",
+      subject: "Welcome to MFT!",
+      html: sendSignupMailHtml(fullName),
     });
-    
+
     res.status(200).json({
       success: true,
       message: "sign up succesfully!",
     });
-    
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "server error!",
+    });
+  }
+};
 
+export const sendVerifyOtp = async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.json({ success: false, message: "email not given" });
+  }
+
+  try {
+    const user =
+      (await UserModel.findOne({ email })) ||
+      (await AdminModel.findOne({ email }));
+
+    if (!user) {
+      return res.json({ success: false, message: "user not found" });
+    }
+
+    const existingOtp = user.currentOtp?.verifyOtp?.[0];
+
+    if (existingOtp) {
+      if (existingOtp.otpExpireAt > Date.now()) {
+        return res.json({
+          success: false,
+          message: "OTP already sent. Please wait until it expires.",
+        });
+      }
+      user.currentOtp.verifyOtp = [];
+    }
+
+    const otp = Math.floor(10000 + Math.random() * 90000);
+
+    const otpEntry = {
+      otp: otp.toString(),
+      otpExpireAt: Date.now() + 3 * 60 * 1000,
+    };
+
+    // Replace old OTP with new one (not push)
+    user.currentOtp.verifyOtp = [otpEntry];
+
+    await user.save();
+
+    await transporter
+      .sendMail({
+        from: `"The author of MFT" <${process.env.BREVO_EMAIL_SERVICE_SMTP_SENDER}>`,
+        to: email,
+        subject: "thanks from MFT||Banking",
+        text: "verify with otp",
+        html: sendOtpMailHtml(String(otp), "Verify Otp", 3),
+      })
+      .catch((err) => console.log("Otp sms send failed:", err));
+
+    res.json({
+      success: true,
+      message: "send verify otp succesfully!",
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      success: false,
+      message: "server error!",
+    });
+  }
+};
+
+export const verifyOtp = async (req: Request, res: Response) => {
+  const { givenOtp, email } = req.body;
+
+  if (!email || !givenOtp) {
+    return res.json({ success: false, message: "missing details" });
+  }
+
+  try {
+
+    const user =
+      (await UserModel.findOne({ email })) ||
+      (await AdminModel.findOne({ email }));
+
+    if (!user) {
+      return res.json({ success: false, message: "user not found" });
+    }
+
+    
+    
+    const otpObj = user.currentOtp?.verifyOtp?.[0];
+
+    if (!otpObj) {
+      user.currentOtp.verifyOtp = [];
+      await user.save();
+
+      return res.json({
+        success: false,
+        message: "OTP not found. It may have expired.",
+      });
+    }
+
+    if (otpObj.otpExpireAt < Date.now()) {
+      return res.json({ success: false, message: "OTP expired" });
+    }
+
+    if (otpObj.otp !== givenOtp) {
+      return res.json({ success: false, message: "Invalid OTP" });
+    }
+
+
+    user.currentOtp.verifyOtp = [];
+    user.isVerified = true;
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "OTP verified succesfully!",
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
