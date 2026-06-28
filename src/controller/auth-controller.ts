@@ -115,7 +115,7 @@ export const signUp = async (req: Request, res: Response) => {
 
 
     await transporter.sendMail({
-    from: `"Author of MFT" <${process.env.RESEND_EMAIL_SERVICE_SMTP_SENDER}>`,
+    from: `"Author of MFT" <${process.env.BREVO_EMAIL_SERVICE_SMTP_SENDER}>`,
     to: "rahatahmedbosscomputer@gmail.com",
     subject: 'Welcome to MFT!',
     html: sendSignupMailHtml(fullName)

@@ -14,6 +14,7 @@ export interface IUser {
   createdAt?: Date;
   updatedAt?: Date;
   department?: string;
+  isVerified?: boolean;
 }
 export interface IAdmin extends IUser {
   adminSecretCode?: string;
@@ -70,6 +71,10 @@ export const userSchema = new mongoose.Schema<IUser>({
   department: {
     type: String,
     default: "Bazar Bhadraghat",
+  },
+  isVerified: {
+    type: Boolean,
+    default: false,
   },
 },
 {
