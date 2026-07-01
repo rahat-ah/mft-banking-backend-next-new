@@ -8,6 +8,10 @@ export interface IUser {
   mobileNumber: string;
   password: string;
   role: "manager" | "loan_officer" | "ceo" | "admin";
+  salary?:{
+    amount: number;
+    updateDate: Date;
+  }
   profileImageUrl?: string;
   branch?: string;
   joinDate: string;
@@ -57,6 +61,10 @@ export const userSchema = new mongoose.Schema<IUser>({
     type: String,
     enum: ["manager", "loan_officer", "ceo","admin"],
     required: true,
+  },
+  salary:{
+    amount:{ type: Number, default: 0 },
+    updateDate: { type: Date, default: Date.now }
   },
   profileImageUrl: {
     type: String,
