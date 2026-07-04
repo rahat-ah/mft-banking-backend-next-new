@@ -39,6 +39,8 @@ export const signUp = async (req: Request, res: Response) => {
       });
     }
 
+    let savedUser;
+
     if (role === "admin") {
       // check if admin already exists
       const existingAdmin = await UserModel.findOne({ role: "admin" });
@@ -65,7 +67,7 @@ export const signUp = async (req: Request, res: Response) => {
         10,
       );
 
-      await AdminModel.create({
+      savedUser =await AdminModel.create({
         fullName,
         email,
         mobileNumber,
@@ -96,7 +98,7 @@ export const signUp = async (req: Request, res: Response) => {
         });
       }
 
-      await UserModel.create({
+      savedUser = await UserModel.create({
         fullName,
         email,
         mobileNumber,
@@ -119,6 +121,7 @@ export const signUp = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       message: "sign up succesfully!",
+      userId: savedUser._id,
     });
 
     await transporter.sendMail({
@@ -138,6 +141,7 @@ export const signUp = async (req: Request, res: Response) => {
 
 export const sendVerifyOtp = async (req: Request, res: Response) => {
   const { email } = req.body;
+  const otpExpireTime = 3 * 60 * 1000; // 3 minutes in milliseconds
 
   if (!email) {
     return res.json({ success: false, message: "email not given" });
@@ -168,7 +172,7 @@ export const sendVerifyOtp = async (req: Request, res: Response) => {
 
     const otpEntry = {
       otp: otp.toString(),
-      otpExpireAt: Date.now() + 3 * 60 * 1000,
+      otpExpireAt: Date.now() + otpExpireTime,
     };
 
     // Replace old OTP with new one (not push)
@@ -289,6 +293,13 @@ export const signin = async (req: Request, res: Response) => {
       return res.json({
         success: false,
         message: "user not found",
+      });
+    }
+    if(!user.isVerified){
+      return res.json({
+        success: false,
+        message: "user is not verified",
+        isVerified: user.isVerified,
       });
     }
     const isPasswordMatched = await bcrypt.compare(password, user.password);
