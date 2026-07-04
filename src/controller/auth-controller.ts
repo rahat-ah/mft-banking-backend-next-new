@@ -295,13 +295,7 @@ export const signin = async (req: Request, res: Response) => {
         message: "user not found",
       });
     }
-    if(!user.isVerified){
-      return res.json({
-        success: false,
-        message: "user is not verified",
-        isVerified: user.isVerified,
-      });
-    }
+    
     const isPasswordMatched = await bcrypt.compare(password, user.password);
     if (!isPasswordMatched) {
       return res.json({
@@ -345,6 +339,15 @@ export const signin = async (req: Request, res: Response) => {
         message: "invalid secret code",
       });
     }
+    if(!user.isVerified){
+      return res.json({
+        success: false,
+        message: "user is not verified",
+        isVerified: user.isVerified,
+        id:user._id
+      });
+    }
+    
     if (!process.env.JWT_SECRET) {
       return res.status(500).json({
         success: false,
